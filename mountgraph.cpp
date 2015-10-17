@@ -93,7 +93,7 @@ void printtree(Node *node, string pre)
 			cout << cur << endl;
 		}
 	} else {
-		cout << pre << node->path << "/ (" << node->device << ")" << endl;
+		cout << pre << node->path << " (" << node->device << ")" << endl;
 	}
 	for (int i = 0; i < int(node->subsize); i++) {
 		printtree(node->sub[i], next);
@@ -133,6 +133,7 @@ Node *get_tree(ifstream &fin)
 			paths[size++] = ipath;
 			ipath = strtok(NULL, "/");
 		}
+		paths[0] = "/";
 		root = totree(paths, size, device);
 	}
 	return root;
