@@ -1,11 +1,9 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <sstream>
 #include <cstring>
 
 using std::string;
-using std::vector;
 using std::cout;
 using std::ifstream;
 using std::stringstream;
@@ -19,12 +17,15 @@ string indent = "  ";
 typedef struct node {
 	string path;
 	string device;
-	vector<struct node *> sub;
+	struct node **sub;
+	int subsize;
 } Node;
 
-void printtree(Node *node, string pre);
+Node *new_node(string path, string device);
+void add_sub(Node *node, Node *sub);
 Node *clone_node(Node *node);
-Node *totree(vector<string> paths, string device);
+void printtree(Node *node, string pre);
+Node *totree(string paths[], int size, string device);
 Node *get_tree(ifstream &fin);
 Node *merge(Node *tree1, Node *tree2);
 
@@ -45,6 +46,33 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
+Node *new_node(string path, string device)
+{
+	const int size = 100;
+	Node *n = new Node;
+	n->path = path;
+	n->device = device;
+	n->sub = new Node*[size];
+	n->subsize = 0;
+	return n;
+}
+
+void add_sub(Node *node, Node *sub)
+{
+	node->sub[node->subsize++] = sub;
+}
+
+Node *clone_node(Node *node)
+{
+	int i;
+	Node *n = new_node(node->path, node->device);
+	for (i = 0; i < node->subsize; i++) {
+		n->sub[i] = clone_node(node->sub[i]);
+	}
+	n->subsize = node->subsize;
+	return n;
+}
+
 void printtree(Node *node, string pre)
 {
 	int count = 0;
@@ -59,7 +87,7 @@ void printtree(Node *node, string pre)
 		next += indent;
 	if (node->device == "") {
 		string cur = pre + node->path + "/";
-		if (node->sub.size() == 1) {
+		if (node->subsize == 1) {
 			next = cur;
 		} else {
 			cout << cur << endl;
@@ -67,29 +95,18 @@ void printtree(Node *node, string pre)
 	} else {
 		cout << pre << node->path << "/ (" << node->device << ")" << endl;
 	}
-	for (int i = 0; i < int(node->sub.size()); i++) {
+	for (int i = 0; i < int(node->subsize); i++) {
 		printtree(node->sub[i], next);
 	}
 }
 
-Node *clone_node(Node *node)
+Node *totree(string paths[], int size, string device)
 {
-	Node *n = new Node;
-	n->path = node->path;
-	n->device = node->device;
-	n->sub = vector<Node *>(node->sub);
-	return n;
-}
-
-Node *totree(vector<string> paths, string device)
-{
-	Node *root = new Node();
+	Node *root = new_node(paths[0], "");
 	Node *p = root, *q;
-	root->path = paths[0];
-	for (int i = 1; i < int(paths.size()); i++) {
-		q = new Node();
-		q->path = paths[i];
-		p->sub.push_back(q);
+	for (int i = 1; i < int(size); i++) {
+		q = new_node(paths[i], "");
+		add_sub(p, q);
 		p = q;
 	}
 	p->device = device;
@@ -107,15 +124,16 @@ Node *get_tree(ifstream &fin)
 		char *path=NULL, *device=NULL;
 		device = strtok(buf, " ");
 		path = strtok(NULL, " ");
-		vector<string> paths;
+		string paths[100];
+		int size = 0;
 		char *ipath=NULL;
-		paths.push_back("");
+		paths[size++] = "";
 		ipath = strtok(path, "/");
 		while (ipath != NULL) {
-			paths.push_back(ipath);
+			paths[size++] = ipath;
 			ipath = strtok(NULL, "/");
 		}
-		root = totree(paths, device);
+		root = totree(paths, size, device);
 	}
 	return root;
 }
@@ -125,14 +143,12 @@ Node *merge(Node *tree1, Node *tree2)
 	Node *tree = NULL;
 	if ((tree2->device != "") && (tree1->device != tree2->device)) {
 		tree = clone_node(tree2);
-	} else if (tree1->sub.size() == 0) {
-		tree = clone_node(tree1);
-		tree->sub = vector<Node *>(tree2->sub);
-	} else {
-		tree = new Node;
-		tree->path = tree1->path;
+	} else if (tree1->subsize == 0) {
+		tree = clone_node(tree2);
 		tree->device = tree1->device;
-		int l1 = tree1->sub.size(), l2 = tree2->sub.size();
+	} else {
+		tree = new_node(tree1->path, tree1->device);
+		int l1 = tree1->subsize, l2 = tree2->subsize;
 		bool used2[l2];
 		for (int i = 0; i < l2; i++)
 			used2[i] = false;
@@ -144,18 +160,18 @@ Node *merge(Node *tree1, Node *tree2)
 				if (!used2[j]) {
 					t2 = tree2->sub[j];
 					if (t1->path == t2->path) {
-						tree->sub.push_back(merge(t1, t2));
+						add_sub(tree, merge(t1, t2));
 						used2[j] = true;
 						used1flag = true;
 					}
 				}
 			if (!used1flag) {
-				tree->sub.push_back(t1);
+				add_sub(tree, t1);
 			}
 		}
 		for (int i = 0; i < l2; i++)
 			if (!used2[i])
-				tree->sub.push_back(tree2->sub[i]);
+				add_sub(tree, tree2->sub[i]);
 	}
 	delete tree1;
 	delete tree2;
