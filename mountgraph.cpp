@@ -1,11 +1,6 @@
-#include <iostream>
-#include <fstream>
+#include <cstdio>
 #include <cstring>
 #include <cstdlib>
-
-using std::ifstream;
-using std::cout;
-using std::endl;
 
 #define LLEN 280
 #define ARRSIZE 60
@@ -23,23 +18,23 @@ Node *new_node(const char *path, const char *device);
 void add_sub(Node *node, Node *sub);
 Node *clone_node(Node *node);
 Node *totree(const char * const *paths, int size, const char *device);
-Node *get_tree(ifstream &fin);
+Node *get_tree(FILE *fp);
 Node *merge(Node *tree1, Node *tree2); //合併兩路徑相同節點（及其子節點）
 void printtree(Node *node, const char *pre);
 
 int main(int argc, char *argv[])
 {
 	const char filename[] = "/proc/mounts";
-	ifstream fin(filename);
+	FILE *fp = fopen(filename, "r");
 	Node *root=NULL, *node=NULL;
-	root = get_tree(fin);
+	root = get_tree(fp);
 	if (root == NULL) {
 		return 1;
 	}
-	while ((node=get_tree(fin)) != NULL) {
+	while ((node=get_tree(fp)) != NULL) {
 		root = merge(root, node);
 	}
-	fin.close();
+	fclose(fp);
 	printtree(root, "");
 	return 0;
 }
@@ -85,11 +80,11 @@ Node *totree(const char * const *paths, int size, const char *device)
 	return root;
 }
 
-Node *get_tree(ifstream &fin)
+Node *get_tree(FILE *fp)
 {
 	Node *root = NULL;
 	char line[LLEN];
-	if (fin.getline(line, LLEN)) {
+	if (fgets(line, LLEN, fp)) {
 		char buf[strlen(line)+1];
 		strcpy(buf, line);
 		char *path=NULL, *device=NULL;
@@ -179,10 +174,10 @@ void printtree(Node *node, const char *pre)
 		if (node->subsize == 1) {
 			strcpy(next, cur);
 		} else {
-			cout << cur << endl;
+			printf("%s\n", cur);
 		}
 	} else {
-		cout << pre << node->path << " (" << node->device << ")" << endl;
+		printf("%s%s (%s)\n", pre, node->path, node->device);
 	}
 	for (int i = 0; i < int(node->subsize); i++) {
 		printtree(node->sub[i], next);
