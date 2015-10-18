@@ -1,12 +1,12 @@
-CXX=g++
-CXXFLAGS=-std=c++11
+CC=gcc
+CFLAGS=-std=c99
 
 .PHONY: all clean
 
 all: mountgraph
 
-mountgraph: mountgraph.cpp
-	$(CXX) $(CXXFLAGS) -o $@ $^
+mountgraph: mountgraph.c
+	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
 	rm -f mountgraph

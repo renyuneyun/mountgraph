@@ -1,9 +1,12 @@
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 #define LLEN 280
 #define ARRSIZE 60
+#define BOOL char
+#define TRUE 1
+#define FALSE 0
 
 const char indent[] = "  ";
 
@@ -17,7 +20,7 @@ typedef struct node {
 Node *new_node(const char *path, const char *device);
 void add_sub(Node *node, Node *sub);
 Node *clone_node(Node *node);
-Node *totree(const char * const *paths, int size, const char *device);
+Node *totree(char * const *paths, int size, const char *device);
 Node *get_tree(FILE *fp);
 Node *merge(Node *tree1, Node *tree2); //合併兩路徑相同節點（及其子節點）
 void printtree(Node *node, const char *pre);
@@ -67,11 +70,11 @@ Node *clone_node(Node *node)
 	return n;
 }
 
-Node *totree(const char * const *paths, int size, const char *device)
+Node *totree(char * const *paths, int size, const char *device)
 {
 	Node *root = new_node(paths[0], "");
 	Node *p = root, *q;
-	for (int i = 1; i < int(size); i++) {
+	for (int i = 1; i < (int)size; i++) {
 		q = new_node(paths[i], "");
 		add_sub(p, q);
 		p = q;
@@ -94,7 +97,7 @@ Node *get_tree(FILE *fp)
 		int size = 0;
 		paths = (char **) malloc(sizeof(char)*ARRSIZE);
 		char *ipath=NULL;
-			paths[size] = (char *) malloc(sizeof(char)*LLEN);
+		paths[size] = (char *) malloc(sizeof(char)*LLEN);
 		strcpy(paths[size++], "");
 		ipath = strtok(path, "/");
 		while (ipath != NULL) {
@@ -124,20 +127,20 @@ Node *merge(Node *tree1, Node *tree2)
 	} else {
 		tree = new_node(tree1->path, tree1->device);
 		int l1 = tree1->subsize, l2 = tree2->subsize;
-		bool used2[l2];
+		BOOL used2[l2];
 		for (int i = 0; i < l2; i++)
-			used2[i] = false;
+			used2[i] = FALSE;
 		Node *t1 = NULL, *t2 = NULL;
 		for (int i = 0; i < l1; i++) {
-			bool used1flag = false;
+			BOOL used1flag = FALSE;
 			t1 = tree1->sub[i];
 			for (int j = 0; j < l2; j++)
 				if (!used2[j]) {
 					t2 = tree2->sub[j];
 					if (strcmp(t1->path, t2->path) == 0) {
 						add_sub(tree, merge(t1, t2));
-						used2[j] = true;
-						used1flag = true;
+						used2[j] = TRUE;
+						used1flag = TRUE;
 					}
 				}
 			if (!used1flag) {
@@ -159,7 +162,7 @@ void printtree(Node *node, const char *pre)
 	int li = strlen(indent);
 	char buf[li+1];
 	buf[li] = '\0';
-	for (int i = 0; i < int(strlen(pre)/2); i++) {
+	for (int i = 0; i < (int)(strlen(pre)/2); i++) {
 		strncpy(buf, pre+i*li, li);
 		if (strcmp(buf, indent) != 0)
 			break;
@@ -179,7 +182,7 @@ void printtree(Node *node, const char *pre)
 	} else {
 		printf("%s%s (%s)\n", pre, node->path, node->device);
 	}
-	for (int i = 0; i < int(node->subsize); i++) {
+	for (int i = 0; i < (int)node->subsize; i++) {
 		printtree(node->sub[i], next);
 	}
 }
