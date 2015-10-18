@@ -1,12 +1,10 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <cstring>
 
+using std::ifstream;
 using std::string;
 using std::cout;
-using std::ifstream;
-using std::stringstream;
 using std::endl;
 
 #define MAX(a,b) a>b ? a : b
@@ -24,10 +22,10 @@ typedef struct node {
 Node *new_node(string path, string device);
 void add_sub(Node *node, Node *sub);
 Node *clone_node(Node *node);
-void printtree(Node *node, string pre);
 Node *totree(string paths[], int size, string device);
 Node *get_tree(ifstream &fin);
-Node *merge(Node *tree1, Node *tree2);
+Node *merge(Node *tree1, Node *tree2); //合併兩路徑相同節點（及其子節點）
+void printtree(Node *node, string pre);
 
 int main(int argc, char *argv[])
 {
@@ -73,33 +71,6 @@ Node *clone_node(Node *node)
 	return n;
 }
 
-void printtree(Node *node, string pre)
-{
-	int count = 0;
-	int li = indent.size();
-	for (int i = 0; i < int(pre.size()/2); i++) {
-		if (pre.substr(i*li, li) != indent)
-			break;
-		count++;
-	}
-	string next = "";
-	for (int i = 0; i < count+1; i++)
-		next += indent;
-	if (node->device == "") {
-		string cur = pre + node->path + "/";
-		if (node->subsize == 1) {
-			next = cur;
-		} else {
-			cout << cur << endl;
-		}
-	} else {
-		cout << pre << node->path << " (" << node->device << ")" << endl;
-	}
-	for (int i = 0; i < int(node->subsize); i++) {
-		printtree(node->sub[i], next);
-	}
-}
-
 Node *totree(string paths[], int size, string device)
 {
 	Node *root = new_node(paths[0], "");
@@ -141,6 +112,7 @@ Node *get_tree(ifstream &fin)
 
 Node *merge(Node *tree1, Node *tree2)
 {
+	// tree1->path == tree2->path
 	Node *tree = NULL;
 	if ((tree2->device != "") && (tree1->device != tree2->device)) {
 		tree = clone_node(tree2);
@@ -178,3 +150,31 @@ Node *merge(Node *tree1, Node *tree2)
 	delete tree2;
 	return tree;
 }
+
+void printtree(Node *node, string pre)
+{
+	int count = 0;
+	int li = indent.size();
+	for (int i = 0; i < int(pre.size()/2); i++) {
+		if (pre.substr(i*li, li) != indent)
+			break;
+		count++;
+	}
+	string next = "";
+	for (int i = 0; i < count+1; i++)
+		next += indent;
+	if (node->device == "") {
+		string cur = pre + node->path + "/";
+		if (node->subsize == 1) {
+			next = cur;
+		} else {
+			cout << cur << endl;
+		}
+	} else {
+		cout << pre << node->path << " (" << node->device << ")" << endl;
+	}
+	for (int i = 0; i < int(node->subsize); i++) {
+		printtree(node->sub[i], next);
+	}
+}
+
