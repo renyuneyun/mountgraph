@@ -47,16 +47,17 @@ int main(int argc, char *argv[])
 Node *new_node(const char *path, const char *device)
 {
 	const int size = 100;
-	Node *n = new Node;
+	Node *n = (Node *) malloc(sizeof(Node));
 	strcpy(n->path, path);
 	strcpy(n->device, device);
-	n->sub = new Node*[size];
+	n->sub = (Node **) malloc(sizeof(Node *)*size);
 	n->subsize = 0;
 	return n;
 }
 
 void add_sub(Node *node, Node *sub)
 {
+	node->sub[node->subsize] = (Node *)malloc(sizeof(Node));
 	node->sub[node->subsize++] = sub;
 }
 
@@ -152,8 +153,8 @@ Node *merge(Node *tree1, Node *tree2)
 			if (!used2[i])
 				add_sub(tree, tree2->sub[i]);
 	}
-	delete tree1;
-	delete tree2;
+	free(tree1);
+	free(tree2);
 	return tree;
 }
 
