@@ -18,27 +18,32 @@ typedef struct node {
 } Node;
 
 Node *new_node(const char *path, const char *device);
+void delete_node(Node *node);
 void add_sub(Node *node, Node *sub);
-Node *clone_node(Node *node);
+Node *clone_node(const Node *node);
 Node *totree(char * const *paths, int size, const char *device);
 Node *get_tree(FILE *fp);
-Node *merge(Node *tree1, Node *tree2); //合併兩路徑相同節點（及其子節點）
-void printtree(Node *node, const char *pre);
+Node *merge(const Node *tree1, const Node *tree2); //合併兩路徑相同節點（及其子節點）
+void printtree(const Node *node, const char *pre);
 
 int main(int argc, char *argv[])
 {
 	const char filename[] = "/proc/mounts";
 	FILE *fp = fopen(filename, "r");
-	Node *root=NULL, *node=NULL;
+	Node *root=NULL, *node=NULL, *newroot=NULL;
 	root = get_tree(fp);
 	if (root == NULL) {
 		return 1;
 	}
 	while ((node=get_tree(fp)) != NULL) {
-		root = merge(root, node);
+		newroot = merge(root, node);
+		delete_node(root);
+		delete_node(node);
+		root = newroot;
 	}
 	fclose(fp);
 	printtree(root, "");
+	delete_node(root);
 	return 0;
 }
 
@@ -53,13 +58,21 @@ Node *new_node(const char *path, const char *device)
 	return n;
 }
 
+void delete_node(Node *node)
+{
+	while (node->subsize > 0) {
+		delete_node(node->sub[--node->subsize]);
+	}
+	free(node->sub);
+	free(node);
+}
+
 void add_sub(Node *node, Node *sub)
 {
-	node->sub[node->subsize] = (Node *)malloc(sizeof(Node));
 	node->sub[node->subsize++] = sub;
 }
 
-Node *clone_node(Node *node)
+Node *clone_node(const Node *node)
 {
 	int i;
 	Node *n = new_node(node->path, node->device);
@@ -115,7 +128,7 @@ Node *get_tree(FILE *fp)
 	return root;
 }
 
-Node *merge(Node *tree1, Node *tree2)
+Node *merge(const Node *tree1, const Node *tree2)
 {
 	// tree1->path == tree2->path
 	Node *tree = NULL;
@@ -144,19 +157,17 @@ Node *merge(Node *tree1, Node *tree2)
 					}
 				}
 			if (!used1flag) {
-				add_sub(tree, t1);
+				add_sub(tree, clone_node(t1));
 			}
 		}
 		for (int i = 0; i < l2; i++)
 			if (!used2[i])
-				add_sub(tree, tree2->sub[i]);
+				add_sub(tree, clone_node(tree2->sub[i]));
 	}
-	free(tree1);
-	free(tree2);
 	return tree;
 }
 
-void printtree(Node *node, const char *pre)
+void printtree(const Node *node, const char *pre)
 {
 	int count = 0;
 	int li = strlen(indent);
