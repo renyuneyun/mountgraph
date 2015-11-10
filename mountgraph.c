@@ -4,8 +4,17 @@
 #include "defs.h"
 #include "output.h"
 
+#define YES 1
+#define NO 0
+#define FORMAT_ASCII 1
+
+typedef struct {
+	int go_on;
+	int output_format;
+} setting;
+
 void print_help();
-int handle_cmdargs(int argc, char *argv[]);
+setting *handle_cmdargs(int argc, char *argv[]);
 Node *new_node(const char *path, const char *device);
 void delete_node(Node *node);
 void add_sub(Node *node, Node *sub);
@@ -16,7 +25,8 @@ Node *merge(const Node *tree1, const Node *tree2); //合併兩路徑相同節點
 
 int main(int argc, char *argv[])
 {
-	if (handle_cmdargs(argc, argv) == 0)
+	setting *s = handle_cmdargs(argc, argv);
+	if (s->go_on == NO)
 		return 0;
 	const char filename[] = "/proc/mounts";
 	FILE *fp = fopen(filename, "r");
@@ -32,24 +42,38 @@ int main(int argc, char *argv[])
 		root = newroot;
 	}
 	fclose(fp);
-	output_ascii(root);
+	switch (s->output_format) {
+		case FORMAT_ASCII: output_ascii(root); break;
+		default: output_ascii(root);
+	}
 	delete_node(root);
+	free(s);
 	return 0;
 }
 
 void print_help(char *progname)
 {
-	printf("Usage: %s\n", progname);
+	printf("Usage: %s [output_format]\n", progname);
+	printf("\noutput_format:\n");
+	printf(" -a, --ascii\n");
 }
 
-int handle_cmdargs(int argc, char *argv[])
+setting *handle_cmdargs(int argc, char *argv[])
 {
-	if (argc == 1)
-		return 1;
-	if ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)) {
-		print_help(argv[0]);
+	setting *s = (setting *) malloc(sizeof(setting));
+	s->go_on = YES;
+	s->output_format = FORMAT_ASCII;
+	if (argc == 1) {
+	} else {
+		if ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)) {
+			s->go_on = NO;
+			print_help(argv[0]);
+		} else if ((strcmp(argv[1], "-a") == 0) || \
+				(strcmp(argv[1], "--ascii") == 0)) {
+			s->output_format = FORMAT_ASCII;
+		}
 	}
-	return 0;
+	return s;
 }
 
 Node *new_node(const char *path, const char *device)
