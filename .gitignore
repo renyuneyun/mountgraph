@@ -1,5 +1,7 @@
-mountgraph
 *.swp
 *~
 *.bak
-bak
+.*
+bak/
+*.o
+mountgraph
