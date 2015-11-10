@@ -5,6 +5,36 @@
 const char indent[] = "  ";
 
 void printtree(const Node *node, const char *pre);
+void routingtree(const Node *node, const char identifier[], const char pre[]);
+
+void routingtree(const Node *node, const char id[], const char pre[])
+{
+	char buf[LLEN], nid[ARRSIZE];
+	const int len = strlen(id);
+	strcpy(nid, id);
+	nid[len+1]='\0';
+	strcpy(buf, pre);
+	strcat(buf, node->path);
+	if ((strcmp(node->device, "") == 0) && (node->subsize == 1)) {
+		if (strcmp(node->path, "/") != 0) //根目錄不另加/
+			strcat(buf, "/");
+		routingtree(node->sub[0], id, buf);
+	} else {
+		printf("%s[label=\"%s\\n\\[%s\\]\"];\n", id, buf, node->device);
+		for (int i = 0; i < node->subsize; i++) {
+			nid[len] = 'a' + i;
+			routingtree(node->sub[i], nid, "");
+			printf("%s -- %s;\n", id, nid);
+		}
+	}
+}
+
+void output_dot(const Node *node)
+{
+	printf("strict graph mountgraph{\n");
+	routingtree(node, "a", "");
+	printf("}\n");
+}
 
 void output_ascii(const Node *node)
 {

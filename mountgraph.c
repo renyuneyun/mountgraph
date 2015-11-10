@@ -7,6 +7,7 @@
 #define YES 1
 #define NO 0
 #define FORMAT_ASCII 1
+#define FORMAT_DOT 2
 
 typedef struct {
 	int go_on;
@@ -44,6 +45,7 @@ int main(int argc, char *argv[])
 	fclose(fp);
 	switch (s->output_format) {
 		case FORMAT_ASCII: output_ascii(root); break;
+		case FORMAT_DOT: output_dot(root); break;
 		default: output_ascii(root);
 	}
 	delete_node(root);
@@ -56,6 +58,7 @@ void print_help(char *progname)
 	printf("Usage: %s [output_format]\n", progname);
 	printf("\noutput_format:\n");
 	printf(" -a, --ascii\n");
+	printf(" -d, --dot\n");
 }
 
 setting *handle_cmdargs(int argc, char *argv[])
@@ -71,6 +74,9 @@ setting *handle_cmdargs(int argc, char *argv[])
 		} else if ((strcmp(argv[1], "-a") == 0) || \
 				(strcmp(argv[1], "--ascii") == 0)) {
 			s->output_format = FORMAT_ASCII;
+		} else if ((strcmp(argv[1], "-d") == 0) || \
+				(strcmp(argv[1], "--dot") == 0)) {
+			s->output_format = FORMAT_DOT;
 		}
 	}
 	return s;
