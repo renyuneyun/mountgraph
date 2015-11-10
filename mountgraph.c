@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 		root = newroot;
 	}
 	fclose(fp);
-	output_ascii(root);
+	output_dot(root);
 	delete_node(root);
 	return 0;
 }
