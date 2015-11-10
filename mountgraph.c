@@ -1,22 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "defs.h"
+#include "output.h"
 
-#define LLEN 280
-#define ARRSIZE 60
-#define BOOL char
-#define TRUE 1
-#define FALSE 0
-
-const char indent[] = "  ";
-
-typedef struct node {
-	char path[LLEN];
-	char device[LLEN];
-	struct node **sub;
-	int subsize;
-} Node;
-
+void print_help();
+int handle_cmdargs(int argc, char *argv[]);
 Node *new_node(const char *path, const char *device);
 void delete_node(Node *node);
 void add_sub(Node *node, Node *sub);
@@ -24,10 +13,11 @@ Node *clone_node(const Node *node);
 Node *totree(char * const *paths, int size, const char *device);
 Node *get_tree(FILE *fp);
 Node *merge(const Node *tree1, const Node *tree2); //合併兩路徑相同節點（及其子節點）
-void printtree(const Node *node, const char *pre);
 
 int main(int argc, char *argv[])
 {
+	if (handle_cmdargs(argc, argv) == 0)
+		return 0;
 	const char filename[] = "/proc/mounts";
 	FILE *fp = fopen(filename, "r");
 	Node *root=NULL, *node=NULL, *newroot=NULL;
@@ -42,8 +32,23 @@ int main(int argc, char *argv[])
 		root = newroot;
 	}
 	fclose(fp);
-	printtree(root, "");
+	output_ascii(root);
 	delete_node(root);
+	return 0;
+}
+
+void print_help(char *progname)
+{
+	printf("Usage: %s\n", progname);
+}
+
+int handle_cmdargs(int argc, char *argv[])
+{
+	if (argc == 1)
+		return 1;
+	if ((strcmp(argv[1], "-h") == 0) || (strcmp(argv[1], "--help") == 0)) {
+		print_help(argv[0]);
+	}
 	return 0;
 }
 
@@ -165,36 +170,5 @@ Node *merge(const Node *tree1, const Node *tree2)
 				add_sub(tree, clone_node(tree2->sub[i]));
 	}
 	return tree;
-}
-
-void printtree(const Node *node, const char *pre)
-{
-	int count = 0;
-	int li = strlen(indent);
-	char buf[li+1];
-	buf[li] = '\0';
-	for (int i = 0; i < (int)(strlen(pre)/2); i++) {
-		strncpy(buf, pre+i*li, li);
-		if (strcmp(buf, indent) != 0)
-			break;
-		count++;
-	}
-	char next[LLEN] = "";
-	for (int i = 0; i < count+1; i++)
-		strcat(next, indent);
-	if (strcmp(node->device, "") == 0) {
-		char cur[LLEN] = "\0";
-		strcat(cur, pre); strcat(cur, node->path); strcat(cur, "/");
-		if (node->subsize == 1) {
-			strcpy(next, cur);
-		} else {
-			printf("%s\n", cur);
-		}
-	} else {
-		printf("%s%s (%s)\n", pre, node->path, node->device);
-	}
-	for (int i = 0; i < (int)node->subsize; i++) {
-		printtree(node->sub[i], next);
-	}
 }
 
